@@ -2,7 +2,12 @@ package com.bookadvisor;
 
 import com.bookadvisor.service.BookService;
 import com.bookadvisor.service.BookLibraryService;
+import com.bookadvisor.factory.BookDtoBuilder;
+import com.bookadvisor.interfaces.BookSaver;
 import com.bookadvisor.model.BookDto;
+import com.bookadvisor.strategy.SaveStrategy;
+import com.bookadvisor.strategy.FileSaveStrategy;
+import com.bookadvisor.strategy.ConsoleSaveStrategy;
 
 import java.util.*;
 
@@ -14,35 +19,52 @@ public class Main {
 
     // Services
     private static final BookService bookService = new BookService();
+
+    // Per tutto il resto
     private static final BookLibraryService libraryService = new BookLibraryService();
+
+
+    // Per salvataggio con IoC
+    private static final BookSaver saver = new BookLibraryService();
+
+    // Strategia di salvataggio, può essere cambiata in ConsoleSaveStrategy per
+    // testare
+    private static SaveStrategy saveStrategy = new FileSaveStrategy();
 
     /**
      * Program start with interactive menu.
      */
     public static void main(String[] args) {
-        boolean exit = false;
 
-        while (!exit) {
-            System.out.println("\n=== BookAdvisor CLI ===");
-            System.out.println("1 - Search books");
-            System.out.println("2 - Show library");
-            System.out.println("3 - Delete a book from the library");
-            System.out.println("4 - Empty the entire library");
-            System.out.println("0 - Exit");
-            System.out.print("Choose an option: ");
-
-            String input = scanner.nextLine().trim();
-            switch (input) {
+        String option;
+        do {
+            printMenu();
+            option = scanner.nextLine();
+            switch (option) {
                 case "1" -> searchAndSaveBook();
-                case "2" -> showLibrary();
-                case "3" -> deleteBook();
-                case "4" -> emptyLibrary();
-                case "0" -> exit = true;
-                default -> System.out.println("❌ Invalid option. Try again.");
+                case "2" -> viewLibrary();
+                case "3" -> emptyLibrary();
+                case "4" -> removeBook();
+                case "5" -> printBookDtoFields();
+                case "6" -> addBookManually();
+                case "7" -> toggleSaveStrategy();
+                case "0" -> System.out.println("👋 Uscita dal programma.");
+                default -> System.out.println("❌ Opzione non valida.");
             }
-        }
+        } while (!option.equals("0"));
+    }
 
-        System.out.println("😁 Exiting the program.");
+    private static void printMenu() {
+        System.out.println("\n📚 Benvenuto in BookAdvisor CLI");
+        System.out.println("1. Cerca e salva un libro");
+        System.out.println("2. Visualizza libreria salvata");
+        System.out.println("3. Svuota libreria");
+        System.out.println("4. Rimuovi un libro dalla libreria");
+        System.out.println("5. Mostra attributi BookDto (via Reflection)");
+        System.out.println("6. Aggiungi manualmente un libro (Builder)");
+        System.out.println("7. Cambia modalità di salvataggio (file/console)");
+        System.out.println("0. Esci");
+        System.out.print("Seleziona un'opzione: ");
     }
 
     /**
@@ -71,7 +93,7 @@ public class Main {
             try {
                 int choice = Integer.parseInt(scanner.nextLine().trim());
                 if (choice > 0 && choice <= books.size()) {
-                    libraryService.saveBook(books.get(choice - 1));
+                    saver.save(books.get(choice - 1));
                     System.out.println("✅ Book saved to your library.");
                 } else if (choice != 0) {
                     System.out.println("❌ Invalid choice.");
@@ -84,41 +106,62 @@ public class Main {
 
     /**
      * Displays the books saved in the file.
+     * If the library is empty, it informs the user.
      */
-    private static void showLibrary() {
+    private static void viewLibrary() {
         List<BookDto> books = libraryService.loadBooks();
 
-        System.out.println("\n🛅Your library contains:");
         if (books.isEmpty()) {
-            System.out.println("(empty)");
+            System.out.println("📭 La libreria è vuota.");
         } else {
+            System.out.println("📚 Libri salvati:");
             for (int i = 0; i < books.size(); i++) {
-                BookDto b = books.get(i);
-                System.out.println((i + 1) + ". " + b.getTitle() + " by " + b.getAuthor());
+                BookDto book = books.get(i);
+                System.out.println((i + 1) + ". " + book.getTitle() + " - " + book.getAuthor() + " ("
+                        + book.getPublishDate() + ")");
+                String coverUrl = book.getCoverUrl();
+                if (coverUrl == null || !coverUrl.startsWith("http")) {
+                    System.out.println("   Copertina: Empty");
+                } else if (!coverUrl.isEmpty()) {
+                    System.out.println("   Copertina: " + coverUrl);
+                } else {
+                    System.out.println("   Copertina: N.D.");
+                }
+                String description = book.getDescription();
+                if (description != null && !description.isEmpty()) {
+                    System.out.println("   Descrizione: " + description);
+                } else {
+                    System.out.println("   Descrizione: N.D.");
+                }
+                System.out.println("   ");
             }
+            System.out.println("Totale libri: " + books.size());
         }
     }
 
     /**
      * Removes a selected book from the library and updates the file.
      */
-    private static void deleteBook() {
+    private static void removeBook() {
         List<BookDto> books = libraryService.loadBooks();
-        showLibrary();
-        if (books.isEmpty()) return;
+        if (books.isEmpty()) {
+            System.out.println("📭 La libreria è vuota.");
+            return;
+        }
 
-        System.out.print("\nEnter the number of the book to remove: ");
+        viewLibrary();
+        System.out.print("🗑️ Inserisci il numero del libro da rimuovere: ");
         try {
-            int choice = Integer.parseInt(scanner.nextLine().trim());
-            if (choice > 0 && choice <= books.size()) {
-                BookDto removed = books.remove(choice - 1);
-                libraryService.saveAll(books);
-                System.out.println("🗑️ Removed: " + removed.getTitle());
+            int index = Integer.parseInt(scanner.nextLine()) - 1;
+            if (index >= 0 && index < books.size()) {
+                books.remove(index);
+                libraryService.saveAllInternal(books);
+                System.out.println("✅ Libro rimosso.");
             } else {
-                System.out.println("❌ Invalid choice.");
+                System.out.println("❌ Scelta non valida.");
             }
         } catch (NumberFormatException e) {
-            System.out.println("❌ Please enter a valid number.");
+            System.out.println("❌ Input non valido.");
         }
     }
 
@@ -126,7 +169,59 @@ public class Main {
      * Completely empties the library saved in the file.
      */
     private static void emptyLibrary() {
-        libraryService.saveAll(new ArrayList<>());
+        saver.saveAll(new ArrayList<>());
         System.out.println("🩻 Library emptied.");
     }
+
+    /**
+     * It uses reflection to print the fields of the BookDto class.
+     * This is useful for understanding the structure of the DTO.
+     */
+    private static void printBookDtoFields() {
+        try {
+            Class<?> clazz = Class.forName("com.bookadvisor.model.BookDto");
+            System.out.println("📘 Attributi BookDto:");
+            Arrays.stream(clazz.getDeclaredFields()).forEach(
+                    field -> System.out.println("- " + field.getName() + " : " + field.getType().getSimpleName()));
+        } catch (ClassNotFoundException e) {
+            System.out.println("❌ Classe non trovata: " + e.getMessage());
+        }
+    }
+
+    private static void addBookManually() {
+        System.out.println("📝 Inserisci manualmente i dati del libro:");
+        System.out.print("Titolo: ");
+        String title = scanner.nextLine();
+        System.out.print("Autore: ");
+        String author = scanner.nextLine();
+        System.out.print("Copertina (url): ");
+        String coverUrl = scanner.nextLine();
+        System.out.print("Anno di pubblicazione: ");
+        String publishDate = scanner.nextLine();
+       
+
+        BookDto book = new BookDtoBuilder()
+                .title(title)
+                .author(author)
+                .coverUrl(coverUrl)
+                .publishDate(publishDate)
+                .build();
+
+        saveStrategy.save(book);
+        System.out.println("✅ Libro aggiunto manualmente e salvato.");
+    }
+
+    /**
+     * This allows switching between saving to a file and printing to the console.
+     */
+    private static void toggleSaveStrategy() {
+        if (saveStrategy instanceof FileSaveStrategy) {
+            saveStrategy = new ConsoleSaveStrategy();
+            System.out.println("✅ Modalità salvataggio impostata su CONSOLE.");
+        } else {
+            saveStrategy = new FileSaveStrategy();
+            System.out.println("✅ Modalità salvataggio impostata su FILE.");
+        }
+    }
+
 }

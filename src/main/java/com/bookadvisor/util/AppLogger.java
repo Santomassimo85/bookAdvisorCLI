@@ -5,32 +5,31 @@ import java.util.logging.*;
 
 public class AppLogger {
 
-    private static final Logger logger = Logger.getLogger("BookAdvisorLogger");
+    private static AppLogger instance;
+    private final Logger logger;
 
-    static {
+    private AppLogger() {
+        logger = Logger.getLogger("BookAdvisorLogger");
+
         try {
-            // Create the logs/ directory if it doesn't exist
             java.nio.file.Files.createDirectories(java.nio.file.Paths.get("logs"));
 
-            // General log: app.log
             FileHandler appHandler = new FileHandler("logs/app.log", true);
             appHandler.setFormatter(new SimpleFormatter());
             appHandler.setLevel(Level.INFO);
 
-            // Error log only: error.log
             FileHandler errorHandler = new FileHandler("logs/error.log", true);
             errorHandler.setFormatter(new SimpleFormatter());
             errorHandler.setLevel(Level.SEVERE);
 
-            // Console output
             ConsoleHandler consoleHandler = new ConsoleHandler();
             consoleHandler.setFormatter(new SimpleFormatter());
             consoleHandler.setLevel(Level.INFO);
 
             logger.setUseParentHandlers(false);
+            logger.addHandler(consoleHandler);
             logger.addHandler(appHandler);
             logger.addHandler(errorHandler);
-            logger.addHandler(consoleHandler);
             logger.setLevel(Level.INFO);
 
         } catch (IOException e) {
@@ -38,7 +37,14 @@ public class AppLogger {
         }
     }
 
-    public static Logger getLogger() {
+    public static synchronized AppLogger getInstance() {
+        if (instance == null) {
+            instance = new AppLogger();
+        }
+        return instance;
+    }
+
+    public Logger getLogger() {
         return logger;
     }
 }

@@ -1,5 +1,6 @@
 package com.bookadvisor;
 
+import com.bookadvisor.factory.BookDtoBuilder;
 import com.bookadvisor.model.BookDto;
 import com.bookadvisor.service.BookLibraryService;
 import org.junit.jupiter.api.Test;
@@ -19,11 +20,10 @@ public class BookFileWriteTest {
      *
      * @throws IOException If an I/O error occurs during file operations.
      */
-     
 
     @Test
     public void testFileContainsSavedBook() throws IOException {
-        System.out.println("🚀 ========== START TEST ==========");
+        System.out.println("___________Testing BookFileWrite________________");
 
         // Create the temporary file
         Path tempFile = Files.createTempFile("test_book_", ".txt");
@@ -54,7 +54,16 @@ public class BookFileWriteTest {
 
             // Create and save the book
             System.out.println("💾 ========== SAVING BOOK ==========");
-            BookDto book = new BookDto("Java 101", "Mario Rossi", "cover.jpg", "2020", "/works/java101");
+
+            // Create a book using the builder
+            BookDto book = new BookDtoBuilder()
+                    .title("Java 101")
+                    .author("Mario Rossi")
+                    .coverUrl("cover.jpg")
+                    .publishDate("2020")
+                    .description("A beginner's guide to Java programming.")
+                    .build();
+
             System.out.println("📚 Book created: " + book.getTitle() + " by " + book.getAuthor());
             System.out.println("🔄 Calling saveBook()...");
 
@@ -88,9 +97,9 @@ public class BookFileWriteTest {
             assertTrue(lines.get(0).contains("Mario Rossi"), "The line should contain the author 'Mario Rossi'");
             System.out.println("✅ OK: Author found");
 
-            System.out.println("🔎 Checking for '/works/java101'...");
-            assertTrue(lines.get(0).contains("/works/java101"), "The line should contain the link '/works/java101'");
-            System.out.println("✅ OK: Link found");
+            System.out.println("🔎 Checking for 'A beginner's guide to Java programming'...");
+            assertTrue(lines.get(0).contains("A beginner's guide to Java programming."), "La riga deve contenere una descrizione");
+            System.out.println("✅ OK: Description found");
 
             System.out.println();
             System.out.println("========== ALL ASSERTIONS PASSED! ==========");
@@ -101,7 +110,7 @@ public class BookFileWriteTest {
             System.out.println("Message: " + e.getMessage());
             e.printStackTrace();
             throw e;
- 
+
         } finally {
             System.out.println();
             System.out.println("========== FINAL CLEANUP ==========");

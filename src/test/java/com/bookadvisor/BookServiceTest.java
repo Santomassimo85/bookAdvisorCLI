@@ -23,6 +23,7 @@ public class BookServiceTest {
      */
     @Test
     public void testSearchReturnsResults() {
+        System.out.println("__________Testing BookService searchBooks________________");
         BookService service = new BookService();
 
         // Execute the searchBooks method with a sample query
