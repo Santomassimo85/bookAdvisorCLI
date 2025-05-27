@@ -1,19 +1,30 @@
 package com.bookadvisor.service;
 
 import com.bookadvisor.model.BookDto;
+import com.bookadvisor.util.AppLogger;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Manages the library saved in a text file.
  * Supports saving, loading, and persistent modification of books.
  */
 public class BookLibraryService {
+    /**
+     * Logger for logging messages.
+     * This can be used to log errors or important information.
+     */
+    private static final Logger logger = AppLogger.getLogger();
 
-    // Name of the file where we save the library
-    // This file is created in the working directory of the project
+    /**
+     * Returns the path to the file where the library is saved.
+     * This can be overridden in subclasses to change the file location.
+     * 
+     * @return file path as a string
+     */
     protected String getFilePath() {
         return "library.txt";
     }
@@ -27,8 +38,9 @@ public class BookLibraryService {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(getFilePath(), true))) {
             writer.write(serialize(book));
             writer.newLine();
+            logger.info("✅ Libro salvato: " + book.getTitle());
         } catch (IOException e) {
-            System.out.println("❌ Error while saving the book: " + e.getMessage());
+            logger.severe("❌ Errore durante il salvataggio: " + e.getMessage());
         }
     }
 
@@ -39,16 +51,15 @@ public class BookLibraryService {
      */
     public List<BookDto> loadBooks() {
         List<BookDto> books = new ArrayList<>();
-
         try (BufferedReader reader = new BufferedReader(new FileReader(getFilePath()))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 books.add(deserialize(line));
             }
+            logger.info("📚 Libri caricati dal file: " + books.size());
         } catch (IOException e) {
-            // if the file does not exist or is empty, return an empty list
+            logger.warning("⚠️ Nessun file trovato o errore durante il caricamento: " + e.getMessage());
         }
-
         return books;
     }
 
@@ -63,8 +74,9 @@ public class BookLibraryService {
                 writer.write(serialize(book));
                 writer.newLine();
             }
+            logger.info("📄 Libreria sovrascritta con " + books.size() + " libri.");
         } catch (IOException e) {
-            System.out.println("❌ Error while saving the library: " + e.getMessage());
+            logger.severe("❌ Errore durante il salvataggio completo della libreria: " + e.getMessage());
         }
     }
 
@@ -90,14 +102,12 @@ public class BookLibraryService {
      */
     private BookDto deserialize(String line) {
         String[] parts = line.split("\\|\\|");
-
-        // Simple handling even if data is missing
-        String title = parts.length > 0 ? parts[0] : "";
-        String author = parts.length > 1 ? parts[1] : "";
-        String coverUrl = parts.length > 2 ? parts[2] : "";
-        String publishDate = parts.length > 3 ? parts[3] : "";
-        String key = parts.length > 4 ? parts[4] : "";
-
-        return new BookDto(title, author, coverUrl, publishDate, key);
+        return new BookDto(
+                parts.length > 0 ? parts[0] : "",
+                parts.length > 1 ? parts[1] : "",
+                parts.length > 2 ? parts[2] : "",
+                parts.length > 3 ? parts[3] : "",
+                parts.length > 4 ? parts[4] : "");
     }
+
 }
