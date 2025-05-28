@@ -6,14 +6,16 @@ import java.util.List;
 
 /**
  * Represents a composite node in the composite pattern.
- * This class represents a single book or a group of books.
+ * This class can represent either a single book or a group of books.
  */
 public class BookGroup extends BookComponent {
+    // List of child components (books or groups of books)
     private final List<BookComponent> children = new ArrayList<>();
+    // Name of the book group
     private final String name;
 
     /**
-     * Constructor to create a BookGroup instance.
+     * Constructs a BookGroup instance with the specified name.
      *
      * @param name The name of the book group.
      */
@@ -22,13 +24,9 @@ public class BookGroup extends BookComponent {
     }
 
     /**
-     * Adds a child component to this book group.
-     * <p>
-     * This method is intended to be used for adding books or other book groups
-     * to this group.
-     * </p>
+     * Adds a child component (either a book or another group) to this group.
      *
-     * @param component The child component to be added.
+     * @param component The child component to add.
      */
     @Override
     public void add(BookComponent component) {
@@ -37,8 +35,9 @@ public class BookGroup extends BookComponent {
 
     /**
      * Returns a list of BookDto objects contained in this book group.
-     * 
-     * @return A list of BookDto objects.
+     * This method recursively collects all books from the group and its children.
+     *
+     * @return A list of BookDto objects contained in this group.
      */
     @Override
     public List<BookDto> toList() {
@@ -51,8 +50,7 @@ public class BookGroup extends BookComponent {
 
     /**
      * Displays the book group information in a formatted manner.
-     * The output includes the name of the group and the details of each book
-     * within it.
+     * The output includes the name of the group and the details of each book or subgroup within it.
      */
     @Override
     public void display() {

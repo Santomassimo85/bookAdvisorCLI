@@ -8,18 +8,16 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-
 /**
- * Unit test for BookService.
- * This test checks if the searchBooks method returns valid results.
- * 
+ * Unit tests for the BookService class.
+ * <p>
+ * These tests verify the behavior of the searchBooks method.
  */
 public class BookServiceTest {
 
-
-    
     /**
-     * Test to check if the searchBooks method returns a non-empty list of books.
+     * Tests that the searchBooks method returns a non-null and non-empty list
+     * when searching for books with a sample query.
      */
     @Test
     public void testSearchReturnsResults() {
@@ -29,10 +27,10 @@ public class BookServiceTest {
         // Execute the searchBooks method with a sample query
         List<BookDto> books = service.searchBooks("java");
 
-        // Check if the result is not null and not empty
-        assertNotNull(books);
+        // Assert that the result is not null
+        assertNotNull(books, "The returned list should not be null.");
 
-        // Check if the result contains at least one book
-        assertFalse(books.isEmpty());
+        // Assert that the result contains at least one book
+        assertFalse(books.isEmpty(), "The returned list should not be empty.");
     }
 }

@@ -11,21 +11,32 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+/**
+ * Unit test for verifying that a book is correctly saved to a file.
+ * This test creates a temporary file, saves a book to it using the BookLibraryService,
+ * and checks that the file contains the expected content.
+ */
 public class BookFileWriteTest {
 
     /**
-     * This test checks if the book is correctly saved to a temporary file.
-     * It creates a temporary file, saves a book to it, and then verifies
-     * that the file contains the expected content.
+     * Tests that the book is correctly saved to a temporary file.
+     * <p>
+     * Steps:
+     * <ul>
+     *     <li>Create a temporary file</li>
+     *     <li>Check that the file is initially empty</li>
+     *     <li>Create a BookDto and save it using BookLibraryService</li>
+     *     <li>Verify that the file contains the expected book data</li>
+     *     <li>Clean up the temporary file</li>
+     * </ul>
      *
      * @throws IOException If an I/O error occurs during file operations.
      */
-
     @Test
     public void testFileContainsSavedBook() throws IOException {
         System.out.println("___________Testing BookFileWrite________________");
 
-        // Create the temporary file
+        // Create a temporary file for testing
         Path tempFile = Files.createTempFile("test_book_", ".txt");
         System.out.println("📁 Temporary file created at: " + tempFile.toAbsolutePath());
         System.out.println("📄 File name: " + tempFile.getFileName());
@@ -34,7 +45,7 @@ public class BookFileWriteTest {
         System.out.println("📏 Initial size: " + Files.size(tempFile) + " bytes");
         System.out.println();
 
-        // Create the service with the path of the temporary file
+        // Create a BookLibraryService instance that writes to the temporary file
         BookLibraryService tempService = new BookLibraryService() {
             @Override
             protected String getFilePath() {
@@ -43,7 +54,7 @@ public class BookFileWriteTest {
         };
 
         try {
-            // Check initial state of the file
+            // Check that the file is initially empty
             System.out.println("🔍 ========== CHECK INITIAL STATE ==========");
             List<String> initialLines = Files.readAllLines(tempFile);
             System.out.println("📖 Initial lines in file: " + initialLines.size());
@@ -52,10 +63,10 @@ public class BookFileWriteTest {
             System.out.println("✅ Initial check completed");
             System.out.println();
 
-            // Create and save the book
+            // Create and save a book
             System.out.println("💾 ========== SAVING BOOK ==========");
 
-            // Create a book using the builder
+            // Build a BookDto instance
             BookDto book = new BookDtoBuilder()
                     .title("Java 101")
                     .author("Mario Rossi")
@@ -73,7 +84,7 @@ public class BookFileWriteTest {
             System.out.println("📏 Size after saving: " + Files.size(tempFile) + " bytes");
             System.out.println();
 
-            // Check the saved content
+            // Read and display the saved content
             System.out.println("🔍 ========== CHECK SAVED CONTENT ==========");
             List<String> lines = Files.readAllLines(tempFile);
             System.out.println("Total lines in file: " + lines.size());
@@ -83,7 +94,7 @@ public class BookFileWriteTest {
             }
             System.out.println();
 
-            // Perform assertions
+            // Assertions to verify file content
             System.out.println("========== PERFORMING ASSERTIONS ==========");
             System.out.println("🔎 Checking that there is exactly 1 line...");
             assertEquals(1, lines.size(), "The file should contain only one line.");
@@ -97,8 +108,8 @@ public class BookFileWriteTest {
             assertTrue(lines.get(0).contains("Mario Rossi"), "The line should contain the author 'Mario Rossi'");
             System.out.println("✅ OK: Author found");
 
-            System.out.println("🔎 Checking for 'A beginner's guide to Java programming'...");
-            assertTrue(lines.get(0).contains("A beginner's guide to Java programming."), "La riga deve contenere una descrizione");
+            System.out.println("🔎 Checking for 'A beginner's guide to Java programming.'...");
+            assertTrue(lines.get(0).contains("A beginner's guide to Java programming."), "The line should contain the description");
             System.out.println("✅ OK: Description found");
 
             System.out.println();

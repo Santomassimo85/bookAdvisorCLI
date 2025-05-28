@@ -6,23 +6,31 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for the {@link StandardBookFactory} class.
+ * This class verifies that the factory correctly creates {@link BookDto} objects.
+ */
 public class BookFactoryTest {
 
+    /**
+     * Tests that the StandardBookFactory creates a BookDto with the expected properties.
+     */
     @Test
     public void testStandardFactoryCreatesBook() {
         System.out.println("__________Testing StandardBookFactory________________");
         BookDtoAbstractFactory factory = new StandardBookFactory();
 
         BookDto book = factory.create(
-            "Il Signore degli Anelli",
+            "The Lord of the Rings",
             "J.R.R. Tolkien",
             "http://cover.jpg",
             "1954",
-            "Un'epica storia di un viaggio fantastico...");
+            "falseKey",
+            "An epic tale of a fantastic journey...");
 
-        assertEquals("Il Signore degli Anelli", book.getTitle());
+        assertEquals("The Lord of the Rings", book.getTitle());
         assertEquals("J.R.R. Tolkien", book.getAuthor());
         assertEquals("1954", book.getPublishDate());
-        assertTrue(book.getDescription().startsWith("Un'epica"));
+        assertTrue(book.getDescription().startsWith("An epic"));
     }
 }

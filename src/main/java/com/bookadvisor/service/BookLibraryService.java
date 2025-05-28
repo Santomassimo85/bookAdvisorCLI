@@ -12,31 +12,28 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * Manages the library saved in a text file.
- * Supports saving, loading, and persistent modification of books.
+ * Service class for managing a library of books stored in a text file.
+ * Provides methods for saving, loading, and updating books persistently.
+ * Supports observer notification for book save events.
  */
-
-// public class BookLibraryService {
-
 public class BookLibraryService implements BookSaver {
 
     /**
-     * List of observers that will be notified when a book is saved.
-     * This allows for additional actions, such as notifications or updates.
+     * List of observers to be notified when a book is saved.
+     * Observers can perform additional actions such as sending notifications or updating UI.
      */
     private final List<Observer> observers = new ArrayList<>();
 
     /**
-     * Logger for logging messages.
-     * This can be used to log errors or important information.
+     * Logger instance for logging informational and error messages.
      */
     private static final Logger logger = AppLogger.getInstance().getLogger();
 
     /**
-     * Returns the path to the file where the library is saved.
-     * This can be overridden in subclasses to change the file location.
-     * 
-     * @return file path as a string
+     * Returns the path to the file where the library is stored.
+     * Subclasses can override this method to change the file location.
+     *
+     * @return the file path as a string
      */
     protected String getFilePath() {
         return "library.txt";
@@ -44,13 +41,9 @@ public class BookLibraryService implements BookSaver {
 
     /**
      * Saves a single book by appending it to the end of the file.
+     * Notifies all registered observers after saving.
      *
-     * @param book book to save
-     * @Important
-     *            This method is marked as important because it is a core
-     *            functionality
-     *            of the library service. It allows users to save books
-     *            persistently.
+     * @param book the book to save
      */
     @Important
     public void saveBook(BookDto book) {
@@ -58,16 +51,16 @@ public class BookLibraryService implements BookSaver {
             writer.write(serialize(book));
             writer.newLine();
             notifyObservers(book);
-            logger.info("✅ Libro salvato: " + book.getTitle());
+            logger.info("✅ Book saved: " + book.getTitle());
         } catch (IOException e) {
-            logger.severe("❌ Errore durante il salvataggio: " + e.getMessage());
+            logger.severe("❌ Error while saving: " + e.getMessage());
         }
     }
 
     /**
-     * Loads all books saved in the file.
+     * Loads all books stored in the file.
      *
-     * @return list of BookDto books
+     * @return a list of BookDto objects loaded from the file
      */
     public List<BookDto> loadBooks() {
         List<BookDto> books = new ArrayList<>();
@@ -76,17 +69,17 @@ public class BookLibraryService implements BookSaver {
             while ((line = reader.readLine()) != null) {
                 books.add(deserialize(line));
             }
-            logger.info("📚 Libri caricati dal file: " + books.size());
+            logger.info("📚 Books loaded from file: " + books.size());
         } catch (IOException e) {
-            logger.warning("⚠️ Nessun file trovato o errore durante il caricamento: " + e.getMessage());
+            logger.warning("⚠️ No file found or error while loading: " + e.getMessage());
         }
         return books;
     }
 
     /**
-     * Completely overwrites the file with a new list of books.
+     * Overwrites the file with a new list of books.
      *
-     * @param books new list to save
+     * @param books the new list of books to save
      */
     public void saveAllInternal(List<BookDto> books) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(getFilePath(), false))) {
@@ -97,30 +90,40 @@ public class BookLibraryService implements BookSaver {
                             writer.write(line);
                             writer.newLine();
                         } catch (IOException e) {
-                            logger.warning("Errore scrittura riga: " + e.getMessage());
+                            logger.warning("Error writing line: " + e.getMessage());
                         }
                     });
-            logger.info("📄 Libreria sovrascritta con " + books.size() + " libri.");
+            logger.info("📄 Library overwritten with " + books.size() + " books.");
         } catch (IOException e) {
-            logger.severe("❌ Errore durante il salvataggio totale: " + e.getMessage());
+            logger.severe("❌ Error during full save: " + e.getMessage());
         }
     }
 
+    /**
+     * Saves a single book by delegating to saveBook.
+     *
+     * @param book the book to save
+     */
     @Override
     public void save(BookDto book) {
         saveBook(book);
     }
 
+    /**
+     * Saves all books by delegating to saveAllInternal.
+     *
+     * @param books the list of books to save
+     */
     @Override
     public void saveAll(List<BookDto> books) {
         saveAllInternal(books);
     }
 
     /**
-     * Converts a BookDto into a string to save in the file.
+     * Serializes a BookDto object into a string for file storage.
      *
-     * @param book book to convert
-     * @return serialized string
+     * @param book the book to serialize
+     * @return the serialized string representation of the book
      */
     private String serialize(BookDto book) {
         return book.getTitle() + "||" +
@@ -131,10 +134,10 @@ public class BookLibraryService implements BookSaver {
     }
 
     /**
-     * Converts a line from the file into a BookDto object.
+     * Deserializes a line from the file into a BookDto object.
      *
-     * @param line line read from the file
-     * @return deserialized book
+     * @param line the line read from the file
+     * @return the deserialized BookDto object
      */
     private BookDto deserialize(String line) {
         String[] parts = line.split("\\|\\|");
@@ -143,15 +146,26 @@ public class BookLibraryService implements BookSaver {
         String author = parts.length > 1 ? parts[1] : "";
         String coverUrl = parts.length > 2 ? parts[2] : "";
         String publishDate = parts.length > 3 ? parts[3] : "";
+        String key = title + "||" + author + "||" + coverUrl + "||" + publishDate;
         String description = parts.length > 4 ? parts[4] : "";
 
-        return new BookDto(title, author, coverUrl, publishDate, description);
+        return new BookDto(title, author, coverUrl, publishDate, key, description);
     }
 
+    /**
+     * Registers an observer to be notified when a book is saved.
+     *
+     * @param o the observer to add
+     */
     public void addObserver(Observer o) {
         observers.add(o);
     }
 
+    /**
+     * Notifies all registered observers about a saved book.
+     *
+     * @param book the book that was saved
+     */
     private void notifyObservers(BookDto book) {
         for (Observer o : observers) {
             o.update(book);
