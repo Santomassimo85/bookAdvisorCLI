@@ -2,16 +2,17 @@
 
 ## a. Application Overview and Functionality
 
-**BookAdvisor** is a command-line application (CLI) written in Java. It allows users to search for books online using the public OpenLibrary API, view book information, and manage a personal library saved to a file.
+**BookAdvisor** is a command-line application (CLI) written in Java. It enables users to search for books online using the OpenLibrary API, view detailed book information, and manage a personal library stored locally.
 
 ### Main Features:
 
-- Enter a keyword to search for books.
-- Display the top 10 results with title and author.
-- Option to save a book to the personal library (saved in `library.txt`).
-- View the saved library.
-- Remove a book from the library.
-- Completely clear the library.
+- Search for books by keyword.
+- Display the top 10 results with title, author, and publication year.
+- View detailed information for a selected book.
+- Save books to a personal library (`library.txt`).
+- List all books in the saved library.
+- Remove individual books from the library.
+- Clear the entire library.
 
 ---
 
@@ -19,17 +20,18 @@
 
 ### Technologies:
 
-- **Java 17**: main programming language.
-- **Maven**: dependency management and build tool.
-- **OpenLibrary API**: external data source.
-- **JUnit 5**: unit testing.
+- **Java 17**: core programming language.
+- **Maven**: build automation and dependency management.
+- **OpenLibrary API**: external book data provider.
+- **JUnit 5**: unit and integration testing.
 
 ### Design Patterns:
 
-- **Factory Pattern** (`BookDtoFactory`): separates the creation of `BookDto` objects from application logic.
-- **Composite Pattern** (`BookComponent`, `BookLeaf`, `BookGroup`): represents both single books and groups uniformly.
-- **Iterator Pattern** (implicit): for iterating over lists and composite structures.
-- **Exception Shielding** (`try/catch` in `BookService` and `BookLibraryService`): protects against errors during network or file system access.
+- **Factory Pattern** (`BookDtoFactory`): encapsulates the creation of `BookDto` objects.
+- **Composite Pattern** (`BookComponent`, `BookLeaf`, `BookGroup`): enables uniform treatment of single books and collections.
+- **Iterator Pattern**: used for traversing book collections and composite structures.
+- **Exception Handling**: robust error management in `BookService` and `BookLibraryService` for network and file operations.
+- **Command Pattern**: encapsulates user actions as command objects for extensibility and testability.
 
 ---
 
@@ -40,7 +42,7 @@
 - Java 17
 - Maven
 
-### Starting the application:
+### Running the application:
 
 ```bash
 git clone <repo>
@@ -49,73 +51,4 @@ mvn clean compile
 mvn exec:java -Dexec.mainClass="com.bookadvisor.Main"
 ```
 
-
-## d. Diagram UML
-
-```
-@startuml
-skinparam classAttributeIconSize 0
-skinparam linetype ortho
-skinparam packageStyle rectangle
-
-package "service" {
-  class BookService {
-    + searchBooks(String): List<BookDto>
-  }
-
-  class BookLibraryService {
-    + saveBook(BookDto)
-    + loadBooks(): List<BookDto>
-    + saveAll(List<BookDto>)
-  }
-}
-
-package "model" {
-  class BookDto{
-  - title: String
-    - author: String
-    - coverUrl: String
-    - publishDate: String
-    - key: String
-    + getTitle()
-    + getAuthor()  
-  }
-  
-}
-
-package "factory" {
-  class BookDtoFactory {
-    + create(...): BookDto
-  }
-}
-
-package "composite" {
-  abstract class BookComponent {
-    + add(BookComponent)
-    + remove(BookComponent)
-    + toList(): List<BookDto>
-    + display()
-  }
-
-  class BookLeaf
-  class BookGroup
-
-  BookComponent <|-- BookLeaf
-  BookComponent <|-- BookGroup
-}
-
-
-package "com.dookadvisor" {
-  class Main
-}
-
-Main --> BookService
-Main --> BookLibraryService
-BookService --> BookDto
-BookService --> BookDtoFactory
-BookService --> BookGroup
-BookGroup --> BookLeaf
-BookLeaf --> BookDto
-BookLibraryService --> BookDto
-@enduml
-```
+---
